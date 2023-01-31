@@ -3,6 +3,8 @@ import cv2
 import os
 import threading
 import time
+import numpy as np
+import pickle
 
 def face_recognition_thread(frame, known_faces, known_names, face_names):
     # Encodage des visages dans la frame
@@ -24,10 +26,9 @@ def face_recognition_thread(frame, known_faces, known_names, face_names):
 # Charger les images d'entraînement
 known_faces = []
 known_names = []
-for name in os.listdir("known_faces"):
-    for filename in os.listdir(f"known_faces/{name}"):
-        image = face_recognition.load_image_file(f"known_faces/{name}/{filename}")
-        encodings = face_recognition.face_encodings(image)
+for name in os.listdir("known_faces_encode"):
+    for filename in os.listdir(f"known_faces_encode/{name}"):
+        encodings = np.load(f"known_faces_encode/{name}/{filename}")
         if len(encodings) > 0:
             known_faces.append(encodings[0])
             known_names.append(name)
