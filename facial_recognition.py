@@ -9,8 +9,11 @@ import pickle
 def face_recognition_thread(frame, known_faces, known_names, face_names):
     # Encodage des visages dans la frame
     faces_locations = face_recognition.face_locations(frame)
+    if len(faces_locations) != 1:
+        return
     faces_encodings = face_recognition.face_encodings(frame, faces_locations)
 
+    
     # Pour chaque visage détecté
     for face_encoding, face_location in zip(faces_encodings, faces_locations):
         # Comparaison avec les images d'entraînement
@@ -21,8 +24,8 @@ def face_recognition_thread(frame, known_faces, known_names, face_names):
             name = known_names[first_match_index]
             if name not in face_names:
                 face_names.append(name)
-            # Affichage du nom du visage détecté
-
+        else:
+            face_names.append(name)
 # Charger les images d'entraînement
 known_faces = []
 known_names = []
@@ -39,31 +42,59 @@ i = 0
 
 # Initialisation de la liste des noms des visages détectés
 face_names = []
-
+nb_faces_detected = 0
+nb_frames_validation = 0
 while True:
     # Capture de la frame
     ret, frame = cap.read()
     if not ret:
         break
+    frame_with_alpha = np.zeros((frame.shape[0], frame.shape[1], 4), dtype=np.uint8)
+    frame_with_alpha[:, :, :3] = frame
+    frame_with_alpha[:,:,3] = 0
     
     if i % 10 == 0:
         # Lancement du thread de reconnaissance faciale
         t = threading.Thread(target=face_recognition_thread, args=(frame, known_faces, known_names, face_names))
         t.start()
     
-    if i % 100 == 0:
-        # Affichage des noms des visages détectés
-        print("--------------------")
-        for name in face_names:
-            print("Elève présent: ", name)
 
-    i += 1
-    # Affichage de l'image avec les visages détectés et étiquetés
-    cv2.imshow("Webcam", frame)
+    # Affichage d'un oval vert au milieu de la frame
+    cv2.ellipse(frame_with_alpha, (int(frame.shape[1]/2), int(frame.shape[0]/2)), (135, 160), 0, 0, 360, (0, 255, 0), 2)
+
+    if len(face_names) > nb_faces_detected:
+        
+        if "Inconnu" in face_names:
+            face_names.remove("Inconnu")
+            nb_frames_validation = -100
+        else :
+            nb_faces_detected = len(face_names)
+            nb_frames_validation = 100
+            print("Validation de la reconnaissance faciale")
+    if nb_frames_validation > 0:
+        nb_frames_validation -= 1
+        # Affichage de 2 lignes formant un v en bas à gauche de la frame en transparence
+        cv2.line(frame_with_alpha, (100, frame.shape[0]-50), (130, frame.shape[0]-80), (0, 255, 0), 2)
+        cv2.line(frame_with_alpha, (100, frame.shape[0]-50), (70, frame.shape[0]-100), (0, 255, 0), 2)
+        # Affichage du nom du visage détecté en bas à droite de la frame en transparence
+        font = cv2.FONT_HERSHEY_DUPLEX
+        cv2.putText(frame_with_alpha, face_names[-1], (frame.shape[1]-200, frame.shape[0]-20), font, 1.0, (0, 255, 0), 1)
+    if nb_frames_validation < 0:
+        nb_frames_validation += 1
+        # Affichage dune croix rouge en bas à gauche de la frame en petit
+        cv2.line(frame_with_alpha, (100, frame.shape[0]-50), (130, frame.shape[0]-100), (0, 0, 255), 2)
+        cv2.line(frame_with_alpha, (130, frame.shape[0]-50), (100, frame.shape[0]-100), (0, 0, 255), 2)
+        # Affichage de "t ki" en bas à droite de la frame en rouge
+        font = cv2.FONT_HERSHEY_DUPLEX
+        cv2.putText(frame_with_alpha, "Inconnue", (frame.shape[1]-200, frame.shape[0]-20), font, 1.0, (0, 0, 255), 1)
+    
+    cv2.imshow("Webcam", frame_with_alpha)
+
 
     # Arrêt si l'utilisateur appuie sur 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+    i += 1
 
 # Libération de la capture vidéo et fermeture des fenêtres
 cap.release()
