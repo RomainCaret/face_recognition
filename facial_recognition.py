@@ -36,7 +36,7 @@ def send_api_request(name):
 
 def send_mail(name, mail):
     email_address = "emargement.face.recognition@gmail.com"
-    email_password = ""
+    email_password = "parekvzmjcmstfvr"
     port = 465  # For SSL
     smtp_server = "smtp.gmail.com"
     sender_email = email_address  # Enter your address
@@ -139,7 +139,12 @@ while True:
         # Affichage de "t ki" en bas à droite de la frame en rouge
         font = cv2.FONT_HERSHEY_DUPLEX
         cv2.putText(frame_with_alpha, "Inconnue", (frame.shape[1]-200, frame.shape[0]-20), font, 1.0, (0, 0, 255), 1)
-    
+
+    # show the output frame in full screen
+    cv2.namedWindow("Webcam", cv2.WND_PROP_FULLSCREEN)
+    cv2.setWindowProperty("Webcam", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+    # Affichage de la frame
     cv2.imshow("Webcam", frame_with_alpha)
 
 
