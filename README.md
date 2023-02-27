@@ -1,4 +1,4 @@
-# Easy Facial Recognition
+# Facial Recognition
 
 Recognition by minimum norm between vectors (128D dlib descriptor)
 ![Alt Text](readme.gif)
@@ -13,8 +13,14 @@ Make sure to have the following libraries installed in your Python environment:
 - opencv
 - dlib
 - numpy
-- imutils
-- pillow
+- face_recognition
+
+```
+pip install opencv-python
+pip install dlib-19.22.99-cp310-cp310-win_amd64.whl
+pip install face_recognition
+pip install requests
+```
 
 #### Setup faces to recognize
 
@@ -35,27 +41,20 @@ Note that the recognition name displayed is taken from the file name (without ex
 
 You need a camera connected to your PC since the program will stream the image of camera on your screen and will recognize the face displayed should the face be part of the `known_faces` folder.
 
+### Run encode_pictures.py
+
+For safety reasons, we do not use pictures directly but use vectors that enable to detect the face without having a full time access to pictures of people. After you run this script the folder `known_faces_encode` should have been created with all the vector of the faces.
+
 ## Run
 
 ```
-easy_facial_recognition.py --i known_faces
+python facial_recognition.py
 ```
-## Youtube Video explanation (French only)
-Click on the image below:
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/54WmrwVWu1w/0.jpg)](https://www.youtube.com/watch?v=54WmrwVWu1w)
+You should see the camera detecting faces if everything is setup correctly
 
-## Authors
+### Authors
 
-* **Anis Ayari** - *Lead Data Scientist* 
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-## Windows environment Notes
-
-On Windows, you may have to additionnally install:
-- opencv-python
-- CMake
-- Visual Studio and the extension for C++ so that `dlib` installation completes successfully
+Romain Caret
+Moncif Matallah
+Djalil El BG

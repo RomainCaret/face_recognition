@@ -1,10 +1,10 @@
+import time
 import face_recognition
 import cv2
 import os
 import threading
-import time
 import numpy as np
-import pickle
+import requests
 
 def face_recognition_thread(frame, known_faces, known_names, face_names):
     # Encodage des visages dans la frame
@@ -24,9 +24,19 @@ def face_recognition_thread(frame, known_faces, known_names, face_names):
             name = known_names[first_match_index]
             if name not in face_names:
                 face_names.append(name)
+                url = "http://localhost:3000/marge"
+                data = {
+                    "nom": name,
+                    "date": time.strftime("%d/%m/%Y"),
+                    "heure": time.strftime("%H:%M:%S")
+                }
+                requests.post(url, data=data)
+                print("Envoi de la reconnaissance faciale")
         else:
             face_names.append(name)
-# Charger les images d'entraînement
+
+
+# Charger les images d'entraînement encodées
 known_faces = []
 known_names = []
 for name in os.listdir("known_faces_encode"):
@@ -49,6 +59,7 @@ while True:
     ret, frame = cap.read()
     if not ret:
         break
+
     frame_with_alpha = np.zeros((frame.shape[0], frame.shape[1], 4), dtype=np.uint8)
     frame_with_alpha[:, :, :3] = frame
     frame_with_alpha[:,:,3] = 0
@@ -57,7 +68,6 @@ while True:
         # Lancement du thread de reconnaissance faciale
         t = threading.Thread(target=face_recognition_thread, args=(frame, known_faces, known_names, face_names))
         t.start()
-    
 
     # Affichage d'un oval vert au milieu de la frame
     cv2.ellipse(frame_with_alpha, (int(frame.shape[1]/2), int(frame.shape[0]/2)), (135, 160), 0, 0, 360, (0, 255, 0), 2)
