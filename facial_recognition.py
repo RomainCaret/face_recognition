@@ -5,8 +5,55 @@ import os
 import threading
 import numpy as np
 import requests
+import smtplib, ssl
 
-def face_recognition_thread(frame, known_faces, known_names, face_names):
+
+def create_mail_dict(names):
+    # open the file in read mode
+    file = open("mails.txt", "r")
+    dict_mail = {}
+    for line in file:
+        # split the line into words
+        words = line.split()
+        # if the first word is in the list of names
+        if words[0] in names:
+            # add the name and the mail to the dictionary
+            dict_mail[words[0]] = words[1]
+    return dict_mail
+
+
+    
+
+def send_api_request(name):
+    url = "http://localhost:3000/marge"
+    data = {
+        "nom": name,
+        "date": time.strftime("%d/%m/%Y"),
+        "heure": time.strftime("%H:%M:%S")
+    }
+    requests.post(url, data=data)
+    print("Envoi de la reconnaissance faciale")
+
+def send_mail(name, mail):
+    email_address = "emargement.face.recognition@gmail.com"
+    email_password = ""
+    port = 465  # For SSL
+    smtp_server = "smtp.gmail.com"
+    sender_email = email_address  # Enter your address
+    receiver_email = mail  # Enter receiver address
+    password = email_password
+    message = """\
+    Subject: Presence
+
+    """+ name + """ est arrive(e) a precisement """ + time.strftime("%H:%M:%S") + """ le """ + time.strftime("%d/%m/%Y") + """."""
+
+    print("Envoi du mail"+ message+ "à "+ mail)
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, message)
+
+def face_recognition_thread(frame, known_faces, known_names, face_names, dict_mail):
     # Encodage des visages dans la frame
     faces_locations = face_recognition.face_locations(frame)
     if len(faces_locations) != 1:
@@ -24,14 +71,8 @@ def face_recognition_thread(frame, known_faces, known_names, face_names):
             name = known_names[first_match_index]
             if name not in face_names:
                 face_names.append(name)
-                url = "http://localhost:3000/marge"
-                data = {
-                    "nom": name,
-                    "date": time.strftime("%d/%m/%Y"),
-                    "heure": time.strftime("%H:%M:%S")
-                }
-                requests.post(url, data=data)
-                print("Envoi de la reconnaissance faciale")
+                send_mail(name, dict_mail[name])
+                send_api_request(name)
         else:
             face_names.append(name)
 
@@ -46,6 +87,7 @@ for name in os.listdir("known_faces_encode"):
             known_faces.append(encodings[0])
             known_names.append(name)
 
+dict_mail = create_mail_dict(known_names)
 # Initialisation de la capture vidéo
 cap = cv2.VideoCapture(0)
 i = 0
@@ -66,7 +108,7 @@ while True:
     
     if i % 10 == 0:
         # Lancement du thread de reconnaissance faciale
-        t = threading.Thread(target=face_recognition_thread, args=(frame, known_faces, known_names, face_names))
+        t = threading.Thread(target=face_recognition_thread, args=(frame, known_faces, known_names, face_names, dict_mail))
         t.start()
 
     # Affichage d'un oval vert au milieu de la frame
